@@ -32,12 +32,19 @@ int main()
 
 	GLfloat vertices[] =
 	{
-		-0.5f, 0.5f, 0.0f, // esquina superior izquierda x = -1 y = 1
-		-0.5f, -0.5f, 0.0f, // esquina inferior izquierda x = -1 y = -1
-		0.5f, -0.5f, 0.0f, // esquina inferior derecha x = 1, y = -1
-		0.5f, -0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
+		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower left corner
+		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right corner
+		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
+		-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner left
+		0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner right
+		0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f // Inner down
+	};
+
+	GLint indices[] =
+	{
+		0, 3, 5,  // Lower left triangle
+		3, 2, 4,  //lower right triangle
+		5, 4, 1  // upper triangle
 	};
 
 
@@ -80,40 +87,44 @@ int main()
 	glDeleteShader(vertexShader); // Delete the now useless Vertex and Fragment Shader objects
 	glDeleteShader(fragmentShader);
 
-	GLuint VAO, VBO;  //Crear contenedor de referencias para el Vertex Array Object y el Vertex Buffer Object
+	GLuint VAO, VBO, EBO;  //Crear contenedor de referencias para el Vertex Array Object y el Vertex Buffer Object
 
 	glGenVertexArrays(1, &VAO);  //Generar el VAO y VBO con solo 1 objeto cada 1 
 	glGenBuffers(1, &VBO);  //generar primero VAO y luego VBO
-
+	glGenBuffers(1, &EBO);
 	glBindVertexArray(VAO);  // Hacer que VAO sea el Vertex Array Object by binding it
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);  // Bind the VBO specifying it's a GL_ARRAY_BUFFER
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // Introduce los vertices a el VBO
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);  //Configura los atributos del vertice de manera que OpenGL sepa como leer el VBO
 	glEnableVertexAttribArray(0);  //Habilita el atributo de vertice que permite a OpenGL saber como usarlo
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);  //bind tanto el VBO y el VAO a 0, de forma que no modifiquemos el VAO o VBO que creamos
 	glBindVertexArray(0);
-
-
-	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);  //Especificar color del fondo
-	glClear(GL_COLOR_BUFFER_BIT);  //Limpiar el back buffer y asignarle el nuevo color
-	glfwSwapBuffers(window);  //Cambiar buffer trasero por el frontal
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	while (!glfwWindowShouldClose(window)) {  //Main while loop
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);  //Especificar color del fondo
 		glClear(GL_COLOR_BUFFER_BIT);  //Limpiar el back buffer y asignarle el nuevo color
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();  //se encarga de todos los eventos de GLFW
 	}
 
-	glfwDestroyWindow(window);  //eliminar ventana antes de cerrarla
+	//ELIMINAR OBJETOS CREADOS
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteProgram(shaderProgram);
+	
+	//ELIMINAR VENTANAS ANTES DE CERRAR EL PROGRAMA
+	glfwDestroyWindow(window); 
 	glfwTerminate();  //terminar GLFW antes de cerrar el programa
 
-	//FINCODIGO
 	return 0;
 }
