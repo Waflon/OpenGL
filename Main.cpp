@@ -32,19 +32,16 @@ int main()
 
 	GLfloat vertices[] =
 	{
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower left corner
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right corner
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
-		-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner left
-		0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner right
-		0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f // Inner down
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f
 	};
 
 	GLint indices[] =
 	{
-		0, 3, 5,  // Lower left triangle
-		3, 2, 4,  //lower right triangle
-		5, 4, 1  // upper triangle
+		0, 1, 3,  
+		1, 3, 2 
 	};
 
 
@@ -111,7 +108,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);  //Limpiar el back buffer y asignarle el nuevo color
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();  //se encarga de todos los eventos de GLFW
 	}
