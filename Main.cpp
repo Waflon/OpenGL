@@ -2,25 +2,25 @@
 #include <glad/glad.h>  // se importa primero GLAD y luego GLFW
 #include <GLFW/glfw3.h>
 
+#include"shaderClass.h"
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
 
+GLfloat vertices[] =
+{
+	//COORDINATES					// COLORS
+	-0.5f, -0.5f, 0.0f,				 0.5f, 0.5f, 0.02f,
+	0.5f, -0.5f, 0.0f,				 0.8f, 0.4f, 0.12f,
+	0.5f, 0.5f, 0.0f,				 0.0f, 0.6f, 0.32f,
+	-0.5f, 0.5f, 0.0f,				 0.7f, 0.45f, 0.5f
+};
 
-//Lo siguiente es copiado textual para usar Vertex Shaders
-//esto deja los valores de las ventanas entre -1 y 1
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-//Fragment Shader source code
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-"}\n\0";
-
-
+GLint indices[] =
+{
+	0, 1, 3,
+	1, 3, 2
+};
 
 int main()
 {
@@ -28,21 +28,6 @@ int main()
  	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  //Le dice a glfw la version usada
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);  //minima y maxima
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  //el tipo de perfil (core = Moderno)
-
-
-	GLfloat vertices[] =
-	{
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
-	};
-
-	GLint indices[] =
-	{
-		0, 1, 3,  
-		1, 3, 2 
-	};
 
 
 	GLFWwindow* window = glfwCreateWindow(800, 800, "Programa 1", NULL, NULL);  //ancho, alto, nombre, fullscrin, no importa
@@ -55,69 +40,44 @@ int main()
 
 	glfwMakeContextCurrent(window);  //agrega la ventana en el contexto actual
 
-
-
-	//CODIGO de manipulacion
-
 	gladLoadGL();  //carga GLAD para que esta configure OpenGL (que recordar, es una maquina de estados)
 
 	glViewport(0, 0, 800, 800);  //especificar rango de vista de OpenGL en la ventana, en este caso va desde
 								 // x = 0, y = 0, hasta x = 800, y = 800
 
-	//Comienza el pipeline vertexShader -> shape assembly -> geometry shader -> rasterazation -> fragment shader -> test and blending
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER); // Create Vertex Shader Object and get its reference
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); // Attach Vertex Shader source to the Vertex Shader Object
-	glCompileShader(vertexShader); // Compile the Vertex Shader into machine code
-	
-	//el fragment shader es toda la informacion necesaria para poder renderizar un pixel en la pantalla (basicamente color y luces)
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); // Create Fragment Shader Object and get its reference
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); // Attach Fragment Shader source to the Fragment Shader Object
-	glCompileShader(fragmentShader); // Compile the Vertex Shader into machine code
-	
-	GLuint shaderProgram = glCreateProgram(); // Create Shader Program Object and get its reference
-	glAttachShader(shaderProgram, vertexShader); // Attach the Vertex and Fragment Shaders to the Shader Program
-	glAttachShader(shaderProgram, fragmentShader);
-	
-	// Wrap-up/Link all the shaders together into the Shader Program
-	glLinkProgram(shaderProgram); 
+	Shader shaderProgram("default.vert", "default.frag");
 
-	glDeleteShader(vertexShader); // Delete the now useless Vertex and Fragment Shader objects
-	glDeleteShader(fragmentShader);
+	VAO VAO1;
+	VAO1.Bind();
 
-	GLuint VAO, VBO, EBO;  //Crear contenedor de referencias para el Vertex Array Object y el Vertex Buffer Object
+	// Generates Vertex Buffer Object and links it to vertices
+	VBO VBO1(vertices, sizeof(vertices));
+	// Generates Element Buffer Object and links it to indices
+	EBO EBO1(indices, sizeof(indices));
 
-	glGenVertexArrays(1, &VAO);  //Generar el VAO y VBO con solo 1 objeto cada 1 
-	glGenBuffers(1, &VBO);  //generar primero VAO y luego VBO
-	glGenBuffers(1, &EBO);
-	glBindVertexArray(VAO);  // Hacer que VAO sea el Vertex Array Object by binding it
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);  // Bind the VBO specifying it's a GL_ARRAY_BUFFER
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // Introduce los vertices a el VBO
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);  //Configura los atributos del vertice de manera que OpenGL sepa como leer el VBO
-	glEnableVertexAttribArray(0);  //Habilita el atributo de vertice que permite a OpenGL saber como usarlo
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);  //bind tanto el VBO y el VAO a 0, de forma que no modifiquemos el VAO o VBO que creamos
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	// Links VBO to VAO
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	// Unbind all to prevent accidentally modifying them
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
 	while (!glfwWindowShouldClose(window)) {  //Main while loop
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);  //Especificar color del fondo
 		glClear(GL_COLOR_BUFFER_BIT);  //Limpiar el back buffer y asignarle el nuevo color
-		glUseProgram(shaderProgram);
-		glBindVertexArray(VAO);
+		shaderProgram.Activate();
+		VAO1.Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();  //se encarga de todos los eventos de GLFW
 	}
 
 	//ELIMINAR OBJETOS CREADOS
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shaderProgram);
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	shaderProgram.Delete();
 	
 	//ELIMINAR VENTANAS ANTES DE CERRAR EL PROGRAMA
 	glfwDestroyWindow(window); 
